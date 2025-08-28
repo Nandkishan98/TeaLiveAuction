@@ -1,0 +1,230 @@
+﻿@model List<TeaLiveAuction.Models.BidderLotDetailRequest>
+@{
+    ViewData["Title"] = "Live Auction Bids";
+}
+
+<!-- custom styles for this page -->
+<style>
+    /* only target this table */
+    .table-container {
+        overflow-y: auto;
+    }
+
+
+
+    table.table.table-bordered.auction-table {
+        min-width: 10px;
+        /* max-width: 332px; */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        /* padding: 10px; */
+    }
+
+    .auction-table {
+        background-color: #fff;
+        table-layout: inherit;
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+        .auction-table thead {
+            background-color: #28a745; /* green header */
+            color: #fff;
+        }
+
+        .auction-table tbody tr {
+            background-color: #fff;
+            color: #000;
+        }
+
+            .auction-table tbody tr:hover {
+                background-color: #e8f5e9; /* very light green on hover */
+            }
+
+        /* keep inputs white with a green border for visibility */
+        .auction-table td input.form-control {
+            background-color: #fff;
+            border: 1px solid #28a745;
+            box-shadow: none;
+        }
+
+        /* style the Clear button as outline-secondary */
+        .auction-table + .btn-clear {
+            margin-top: .5rem;
+        }
+
+        /* green confirm button */
+        .auction-table .btn-success {
+            background-color: #28a745;
+            border-color: #28a745;
+        }
+
+    .form-control:disabled, .form-control[readonly] {
+        background-color: #e9ecef !important;
+    }
+</style>
+
+<h2>@ViewData["Title"]</h2>
+
+<form asp-action="Index" class="m-auto" method="get" style="width:25%; margin-bottom:1rem;">
+    <div style="display:flex; gap:5px; align-items:center;">
+        @Html.DropDownList(
+                 "searchLotNo",
+                 new SelectList(ViewData["lotNos"] as List<string>, "", "", TempData["SearchLotNo"]),
+                 "-- Select Lot No --",
+                 new
+                 {
+                     @class = "form-control",
+                     onchange = "this.form.submit();",
+                     style = "width:80%;"
+                 }
+                 )
+        <button type="submit"
+                formaction="@Url.Action("ClearData", new { SearchLotNo = TempData["SearchLotNo"] })"
+                formmethod="post"
+                class="btn btn-outline-secondary btn-clear"
+                style="width:20%;">
+            Clear
+        </button>
+        <button type="button"
+                id="btnTest"
+                class="btn btn-outline-secondary btn-clear"
+                style="width:20%;">
+            Clear
+        </button>
+    </div>
+</form>
+<div class="table-container mt-2">
+
+    <table class="table table-bordered auction-table m-auto">
+        <thead>
+            <tr>
+                <th style="display:none;">Auction Lot Detail ID</th>
+                <th>Lot No</th>
+                <th>Base Price</th>
+                <th>RP</th>
+                <th>Packages</th>
+                <th>#Rules</th>
+                <th>Buyer Code</th>
+                <th style="display:none;">Buyer User ID</th>
+                <th>BQ@HBP</th>
+                <th>Bid Price</th>
+                <th>Auto Bid Limit</th>
+                <th>Limit Price</th>
+                <th>HBP</th>
+                <th>Rank</th>
+                <th>BQ/DQ</th>
+                <th>Bid Time</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <form asp-action="ConfirmBid" method="post">
+                    <td style="display:none;">
+                        <input type="hidden" name="AuctionLotDetailId" value="@item.auctionLotDetailId" />
+                    </td>
+                    <td>
+                        <input type="hidden" name="LotNo" value="@item.LotNo" />
+                            @item.LotNo
+                    </td>
+                    <td>@item.basePrice</td>
+                    <td>@item.reservePrice</td>
+                    <td>@item.totalPackages</td>
+                    <td>@item.noOfDivisibleBuyers</td>
+                    <td>
+                        <input type="hidden" name="BuyerCode" value="@item.buyerCode" />
+                            @item.buyerCode
+                    </td>
+                    <td style="display:none;">
+                        <input type="hidden" name="BuyerUserId" value="@item.buyerUserId" />
+                    </td>
+                    <td>
+                        <input type="number" name="BuyingQty" value="@item.buyingQty"
+                               class="form-control" step="0.01" onfocus="if(this.value == '0') this.value='';" onblur="if(this.value == '') this.value = '0';"
+                            @(item.buyingQty > 0 ? "readonly" : "") />
+
+                    </td>
+                    <td>
+                        <input type="number" name="BidPrice" value="@item.bidPrice"
+                               class="form-control" step="0.01" onfocus="if(this.value == '0') this.value='';" onblur="if(this.value == '') this.value = '0';" />
+                    </td>
+                    <td>
+                        <input type="number" name="AutoBidLimit" value="@(item.AutoBidLimit == null || item.AutoBidLimit == 0.00m ? 0 : item.AutoBidLimit)"
+                               class="form-control" step="0.01" onfocus="if(this.value == '0') this.value='';" onblur="if(this.value == '') this.value = '0';" />
+                    </td>
+                    <td>
+                        <input type="number" name="LimitPrice" value="@(item.LimitPrice == null || item.LimitPrice == 0.00m ? 0 : item.LimitPrice)"
+                               class="form-control" step="0.01" onfocus="if(this.value == '0') this.value='';" onblur="if(this.value == '') this.value = '0';" />
+                    </td>
+                    <td style="color:@(item.indicatedColor == "#1a3668" || item.indicatedColor == null ? "white" : "black"); background-color: @(item.indicatedColor ?? "#1a3668")">@item.highestBidPrice</td>
+                    <td>@item.bidderRank</td>
+                    <td>@item.buyingQty/@item.soldPackages</td>
+                    <td>@item.bidSubmissionTime</td>
+                    <td>@item.status</td>
+                    <td>
+                        <button type="submit" class="btn btn-sm btn-success">
+                            Confirm
+                        </button>
+                    </td>
+                    </form>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- SignalR -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        // Optional: get query string parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        // const buyerUserId = urlParams.get('buyerUserId');
+
+        // Create SignalR connection
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("https://localhost:7227/auctionHub") // Update to your correct backend URL
+            .build();
+
+        
+
+        // SignalR event listener
+        connection.on("ReceiveHBPUpdate", function () {
+            alert("Received HBP update from SignalR hub.");
+        });
+
+        // Start SignalR connection
+        connection.start()
+            .then(() => {
+                console.log('SignalR connection started.');
+            })
+            .catch(function (err) {
+                return console.error('SignalR connection failed:', err.toString());
+            });
+
+        // AJAX button click handler
+        $("#btnTest").click(function () {
+            $.ajax({
+                url: '@Url.Action("gettest", "Auction")', // Razor will convert this to /Auction/gettest
+                method: 'GET',
+                success: function (result) {
+                    console.log("AJAX request successful!");
+                    console.log(result);
+                },
+                error: function (xhr, status, error) {
+                    console.error("AJAX request failed:", error);
+                }
+            });
+        });
+    });
+</script>
+
